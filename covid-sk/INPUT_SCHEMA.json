@@ -1,0 +1,8 @@
+{
+    "title": "Coronavirus stats in Slovakia",
+    "description": "Actor gets an actual number of infected and deceased people in Slovakia from https://www.korona.gov.sk/.\n\nLatest data are available at this URL: https://api.apify.com/v2/key-value-stores/SohSUsZTWJ7b2lBPh\n/records/LATEST?disableRedirect=true.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+    }
+}
