@@ -16,9 +16,13 @@ Apify.main(async () => {
         handlePageTimeoutSecs: 120,
         handlePageFunction: async ({$, body}) => {
             let totalInfected = 0;
+            let tested = 0;
+            let negative = 0;
             let totalDeceased = undefined;
             const contentDivs = $('.covd-counter > div');
             if (contentDivs) {
+                tested = contentDivs.eq(0).find('.countValue').text().trim();
+                negative = contentDivs.eq(1).find('.countValue').text().trim();
                 const total = contentDivs.eq(2).find('.countValue').text().trim();
                 if (total) {
                     totalInfected = total;
@@ -26,6 +30,8 @@ Apify.main(async () => {
             }
 
             const data = {
+                tested: parseInt(tested, 10),
+                negative: parseInt(negative, 10),
                 infected: parseInt(totalInfected, 10),
                 deceased: parseInt(totalDeceased, 10),
                 SOURCE_URL,
