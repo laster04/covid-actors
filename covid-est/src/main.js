@@ -54,7 +54,6 @@ Apify.main(async () => {
             const data = {
                 infected: parseInt(totalInfected, 10),
                 deceased: 0,
-                infectedByRegion,
                 SOURCE_URL,
                 lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
                 readMe: 'https://apify.com/lukass/covid-est',
@@ -67,7 +66,7 @@ Apify.main(async () => {
             }
             const actual = Object.assign({}, data);
             delete actual.lastUpdatedAtApify;
-            await dataset.pushData(actual);
+            await Apify.pushData(actual);
 
             if(JSON.stringify(latest)!== JSON.stringify(actual)){
                 log.info('Data did change :( storing new to dataset.');
