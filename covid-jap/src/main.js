@@ -10,6 +10,12 @@ Apify.main(async () => {
     const dataset = await Apify.openDataset("COVID-19-JAPAN-HISTORY");
     await requestQueue.addRequest({url: SOURCE_URL});
 
+    await Apify.addWebhook({
+        eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
+        requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+        payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
+    });
+
     const crawler = new Apify.BasicCrawler({
         requestQueue,
         handleRequestFunction: async ({request}) => {

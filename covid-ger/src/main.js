@@ -10,9 +10,9 @@ Apify.main(async () => {
   await requestQueue.addRequest({url: SOURCE_URL});
 
   await Apify.addWebhook({
-      eventTypes: ['ACTOR.RUN.SUCCEEDED'],
+      eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
       requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
-      payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventData": {{eventData}}, "resource": {{resource}} }`,
+      payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
   });
 
   const crawler = new Apify.CheerioCrawler({

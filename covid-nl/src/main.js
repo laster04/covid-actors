@@ -18,6 +18,12 @@ Apify.main(async () => {
     const dataset = await Apify.openDataset("COVID-19-NL-HISTORY");
     await requestQueue.addRequest({ url: SOURCE_URL, userData: { label: LABELS.GOV }});
 
+    await Apify.addWebhook({
+        eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
+        requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+        payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
+    });
+
     const crawler = new Apify.CheerioCrawler({
         requestQueue,
         useApifyProxy: true,
