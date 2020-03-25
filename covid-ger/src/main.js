@@ -9,18 +9,11 @@ Apify.main(async () => {
   const dataset = await Apify.openDataset("COVID-19-GERMANY-HISTORY");
   await requestQueue.addRequest({url: SOURCE_URL});
 
-//   await Apify.addWebhook({
-//       eventTypes: ['ACTOR.RUN.SUCCEEDED'],
-//       requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
-//       payloadTemplate: `{
-//     "notificationEmail": "sirhallukas@gmail.com"
-//     "userId": {{userId}},
-//     "createdAt": {{createdAt}},
-//     "eventType": {{eventType}},
-//     "eventData": {{eventData}},
-//     "resource": {{resource}}
-// }`,
-//   });
+  await Apify.addWebhook({
+      eventTypes: ['ACTOR.RUN.SUCCEEDED'],
+      requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+      payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "resource": {{resource}} }`,
+  });
 
   const crawler = new Apify.CheerioCrawler({
     requestQueue,
