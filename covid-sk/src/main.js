@@ -1,13 +1,13 @@
 const Apify = require('apify');
 const SOURCE_URL = 'https://www.korona.gov.sk';
 const LATEST = 'LATEST';
-const {log} = Apify.utils;
+const { log, requestAsBrowser } = Apify.utils;
 
 Apify.main(async () => {
     const requestQueue = await Apify.openRequestQueue();
     const kvStore = await Apify.openKeyValueStore('COVID-19-SK');
     const dataset = await Apify.openDataset("COVID-19-SK-HISTORY");
-    await requestQueue.addRequest({url: SOURCE_URL});
+    await requestQueue.addRequest({url: 'https://mojeezdravie.nczisk.sk/api/v1/ezdravie-stats-proxy-api.php'});
 
     await Apify.addWebhook({
         eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
@@ -15,28 +15,37 @@ Apify.main(async () => {
         payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
     });
 
-    const crawler = new Apify.CheerioCrawler({
+    const crawler = new Apify.BasicCrawler({
         requestQueue,
-        useApifyProxy: true,
-        apifyProxyGroups: ['CZECH_LUMINATI'],
-        handlePageTimeoutSecs: 120,
-        handlePageFunction: async ({$, body}) => {
+        handleRequestFunction: async ({ request }) => {
+            const proxyUrl = Apify.getApifyProxyUrl({
+                groups: ['CZECH_LUMINATI'],
+            });
+
+            const response = await requestAsBrowser({
+                url: request.url,
+                proxyUrl,
+                json:true,
+            });
+            const body = response.body.tiles;
+
+            const k26 = body.k26.data;
+            const k25 = body.k25.data;
             let totalInfected = 0;
-            let tested = 0;
             let negative = 0;
             let totalDeceased = undefined;
-            const contentDivs = $('.covd-counter > div');
-            if (contentDivs) {
-                tested = contentDivs.eq(0).find('.countValue').text().trim();
-                negative = contentDivs.eq(1).find('.countValue').text().trim();
-                const total = contentDivs.eq(2).find('.countValue').text().trim();
-                if (total) {
-                    totalInfected = total;
-                }
+
+            if (k25.d[k25.d.length - 1].v) {
+                negative = k25.d[k25.d.length - 1].v;
+            }
+            if (k26.d[k26.d.length - 1].v) {
+                totalInfected = k26.d[k26.d.length - 1].v
+            }
+            if (totalInfected === 0 || negative === 0) {
+                throw new Error('BAD scraping non results')
             }
 
             const data = {
-                tested: parseInt(tested, 10),
                 negative: parseInt(negative, 10),
                 infected: parseInt(totalInfected, 10),
                 deceased: parseInt(totalDeceased, 10),
