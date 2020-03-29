@@ -27,6 +27,7 @@ Apify.main(async () => {
     const crawler = new Apify.CheerioCrawler({
         requestQueue,
         useApifyProxy: true,
+        maxRequestRetries: 2,
         apifyProxyGroups: ['GERMANY'],
         handlePageTimeoutSecs: 120,
         handlePageFunction: async ({$, request}) => {
@@ -78,6 +79,10 @@ Apify.main(async () => {
                     if (JSON.stringify(latest) !== JSON.stringify(actual)) {
                         log.info('Data did change :( storing new to dataset.');
                         await dataset.pushData(data);
+                    }
+
+                    if (latest.infected > actual.infected || latest.deceased > actual.deceased) {
+                        throw new Error('Actual numbers are lower then latest probably wrong parsing');
                     }
 
                     await kvStore.setValue(LATEST, data);
