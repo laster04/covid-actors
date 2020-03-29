@@ -40,6 +40,7 @@ Apify.main(async () => {
                             const text = contentTitle.text().trim();
                             if (text.includes('Current news')) {
                                 totalInfected = $(cd).find('h4').text().trim();
+                                totalInfected = totalInfected.replace('.','');
                             }
                         }
                     }
