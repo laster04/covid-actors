@@ -52,8 +52,12 @@ Apify.main(async () => {
 
             const data = {
                 infected: parseInt(totalInfected, 10),
+                tested: undefined,
                 deceased: parseInt(totalDeceased, 10),
                 infectedByRegion,
+                country: 'Canada',
+                moreData: 'https://api.apify.com/v2/key-value-stores/fabbocwKrtxSDf96h/records/LATEST?disableRedirect=true',
+                historyData: 'https://api.apify.com/v2/datasets/ji95MgtBVgGJF7XcP/items?format=json&clean=1',
                 SOURCE_URL,
                 lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
                 readMe: 'https://apify.com/lukass/covid-cad',
