@@ -77,6 +77,11 @@ Apify.main(async () => {
                 await dataset.pushData(data);
             }
 
+            if (latest.infected > data.infected || latest.deceased > data.deceased) {
+                log.error('Latest data are high then actual - probably wrong scrap');
+                process.exit(1);
+            }
+
             await kvStore.setValue(LATEST, data);
             log.info('Data stored, finished.')
         },
