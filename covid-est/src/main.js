@@ -101,7 +101,7 @@ Apify.main(async () => {
 
     if(JSON.stringify(latest)!== JSON.stringify(actual)){
         log.info('Data did change :( storing new to dataset.');
-        await Apify.pushData(data);
+        await dataset.pushData(data);
     }
 
     await kvStore.setValue(LATEST, data);
