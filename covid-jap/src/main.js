@@ -101,7 +101,7 @@ Apify.main(async () => {
     }
     if (latest.infected > data.infected || latest.deceased > data.deceased) {
         log.error('Latest data are high then actual - probably wrong scrap');
-        // process.exit(1);
+        process.exit(1);
     }
     const actual = Object.assign({}, data);
     delete actual.lastUpdatedAtApify;
