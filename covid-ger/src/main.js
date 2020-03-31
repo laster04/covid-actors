@@ -46,8 +46,12 @@ Apify.main(async () => {
 
       const data = {
         infected: parseInt(secondColumn.replace('.', ''), 10),
+        tested: undefined,
         deceased: parseInt(deathColumn.replace('.', ''), 10),
         infectedByRegion,
+        country: 'Germany',
+        moreData: 'https://api.apify.com/v2/key-value-stores/OHrZyNo9BzT6xKMRD/records/LATEST?disableRedirect=true',
+        historyData: 'https://api.apify.com/v2/datasets/dcm4uXhiGIjVdJAzS/items?format=json&clean=1',
         SOURCE_URL,
         lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
         readMe: 'https://apify.com/lukass/covid-ger',
@@ -65,6 +69,11 @@ Apify.main(async () => {
       if (JSON.stringify(latest) !== JSON.stringify(actual)) {
         log.info('Data did change :( storing new to dataset.');
         await dataset.pushData(data);
+      }
+
+      if (latest.infected > data.infected || latest.deceased > data.deceased) {
+        log.error('Latest data are high then actual - probably wrong scrap');
+        process.exit(1);
       }
 
       await kvStore.setValue(LATEST, data);
