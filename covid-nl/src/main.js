@@ -82,7 +82,8 @@ Apify.main(async () => {
                     }
 
                     if (latest.infected > actual.infected || latest.deceased > actual.deceased) {
-                        throw new Error('Actual numbers are lower then latest probably wrong parsing');
+                        log.error('Actual numbers are lower then latest probably wrong parsing');
+                        process.exit(1);
                     }
 
                     await kvStore.setValue(LATEST, data);
