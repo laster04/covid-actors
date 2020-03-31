@@ -1,6 +1,6 @@
 const Apify = require('apify');
 const cheerio = require('cheerio');
-const SOURCE_URL = 'https://www.rivm.nl/node/152921';
+const SOURCE_URL = 'https://www.rivm.nl/actuele-informatie-over-coronavirus';
 const LATEST = 'LATEST';
 const {log, requestAsBrowser} = Apify.utils;
 
@@ -8,9 +8,6 @@ const LABELS = {
     GOV: 'GOV',
     WIKI: 'WIKI',
 };
-
-let totalInfected = 0;
-let totalDeceased = undefined;
 
 Apify.main(async () => {
     const requestQueue = await Apify.openRequestQueue();
@@ -24,6 +21,9 @@ Apify.main(async () => {
         payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
     });
 
+    let totalInfected = 0;
+    let totalDeceased = undefined;
+
     const crawler = new Apify.CheerioCrawler({
         requestQueue,
         useApifyProxy: true,
@@ -34,18 +34,16 @@ Apify.main(async () => {
             const { label } = request.userData;
             switch (label) {
                 case LABELS.GOV:
-                    const contentDivs = $('.content').toArray();
-                    for (const cd of contentDivs) {
-                        const contentTitle = $(cd).find('h2');
-                        if (contentTitle) {
-                            const text = contentTitle.text().trim();
-                            if (text.includes('Current news')) {
-                                totalInfected = $(cd).find('h4').text().trim();
-                                totalInfected = totalInfected.replace('.','');
-                            }
-                        }
+                    const contentDivs = $('.sdv-landingspagina .card-deck');
+                    if (contentDivs.length > 0) {
+                        const cards = contentDivs.find('.card-body');
+                        const bodyInfected = cards.eq(0).find('p').eq(0).text().trim();
+                        const infectedMatch = bodyInfected.match(/(\d+[\s,\.]\d+)/);
+                        const bodyDeceased = cards.eq(2).find('p').eq(0).text().trim();
+                        const deceasedMatch = bodyDeceased.match(/(\d+[\s,\.]\d+)/);
+                        totalInfected = infectedMatch[0].replace('.', '');
+                        totalDeceased = deceasedMatch[0].replace('.', '');
                     }
-                    await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_the_Netherlands', userData: { label: LABELS.WIKI }});
                     break;
                 case LABELS.WIKI:
                     const tableRows = $('table.infobox tr').toArray();
@@ -59,35 +57,6 @@ Apify.main(async () => {
                             }
                         }
                     }
-                    const data = {
-                        infected: parseInt(totalInfected, 10),
-                        deceased: parseInt(totalDeceased, 10),
-                        SOURCE_URL,
-                        lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
-                        readMe: 'https://apify.com/lukass/covid-nl',
-                    };
-
-                    // Compare and save to history
-                    const latest = await kvStore.getValue(LATEST);
-                    if (latest) {
-                        delete latest.lastUpdatedAtApify;
-                    }
-                    const actual = Object.assign({}, data);
-                    delete actual.lastUpdatedAtApify;
-                    await Apify.pushData(data);
-
-                    if (JSON.stringify(latest) !== JSON.stringify(actual)) {
-                        log.info('Data did change :( storing new to dataset.');
-                        await dataset.pushData(data);
-                    }
-
-                    if (latest.infected > actual.infected || latest.deceased > actual.deceased) {
-                        log.error('Actual numbers are lower then latest probably wrong parsing');
-                        process.exit(1);
-                    }
-
-                    await kvStore.setValue(LATEST, data);
-                    log.info('Data stored, finished.')
                     break;
             }
 
@@ -100,4 +69,38 @@ Apify.main(async () => {
     log.info('CRAWLER -- start');
     await crawler.run();
     log.info('CRAWLER -- finish');
+
+    const data = {
+        infected: parseInt(totalInfected, 10),
+        tested: undefined,
+        deceased: parseInt(totalDeceased, 10),
+        country: 'Netherlands',
+        moreData: 'https://api.apify.com/v2/key-value-stores/vqnEUe7VtKNMqGqFF/records/LATEST?disableRedirect=true',
+        historyData: 'https://api.apify.com/v2/datasets/jr5ogVGnyfMZJwpnB/items?format=json&clean=1',
+        SOURCE_URL,
+        lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
+        readMe: 'https://apify.com/lukass/covid-nl',
+    };
+
+    // Compare and save to history
+    const latest = await kvStore.getValue(LATEST);
+    if (latest) {
+        delete latest.lastUpdatedAtApify;
+    }
+    const actual = Object.assign({}, data);
+    delete actual.lastUpdatedAtApify;
+    await Apify.pushData(data);
+
+    if (JSON.stringify(latest) !== JSON.stringify(actual)) {
+        log.info('Data did change :( storing new to dataset.');
+        await dataset.pushData(data);
+    }
+
+    if (latest.infected > actual.infected || latest.deceased > actual.deceased) {
+        log.error('Actual numbers are lower then latest probably wrong parsing');
+        process.exit(1);
+    }
+
+    await kvStore.setValue(LATEST, data);
+    log.info('Data stored, finished.');
 });
