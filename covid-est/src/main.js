@@ -21,6 +21,7 @@ Apify.main(async () => {
     });
 
     let totalInfected = 0;
+    let tested = undefined;
     let totalDeceased = undefined;
 
     const crawler = new Apify.CheerioCrawler({
@@ -29,23 +30,26 @@ Apify.main(async () => {
         handlePageTimeoutSecs: 120,
         handlePageFunction: async ({ $, request }) => {
             const { label } = request.userData;
-            const now = new Date();
-            const infectedByRegion = [];
             switch (label) {
                 case LABELS.GOV:
-                    const h2s = $('h2').toArray();
-                    for (let head of h2s) {
-                        head = $(head);
-                        if (head.text().trim() === 'CURRENT SITUATION'){
-                            const parent = head.parent('div');
-                            const list = parent.find('ul > li');
-                            const total = list.eq(1).text().trim().match(/\s\d+\s/g);
-                            if (total) {
-                                totalInfected = total[1];
+                    const infoBoxes = $('.static-infobox02').toArray();
+                    for (let box of infoBoxes) {
+                        const head = $(box).find('h1');
+                        if (head.text().trim() === 'CURRENT SITUATION IN ESTONIA'){
+                            const list = $(box).find('ul > li');
+                            const line2Match = list.eq(1).text().match(/(\d+[\s]*\d+)/g);
+                            if (line2Match.length === 2) {
+                                [tested, totalInfected] = line2Match;
+                                tested = tested.replace(' ', '');
+                            }
+                            const line3Match = list.eq(3).text().match(/\.\s(\d+)/g);
+                            if (line3Match.length === 2) {
+                                [a, totalDeceased] = line3Match;
+                                totalDeceased = totalDeceased.replace('.', '');
                             }
                         }
                     }
-                    await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Estonia', userData: { label: LABELS.WIKI }});
+                    // await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Estonia', userData: { label: LABELS.WIKI }});
                     break;
                 case LABELS.WIKI:
                     const tableRows = $('table.infobox tr').toArray();
@@ -59,31 +63,6 @@ Apify.main(async () => {
                             }
                         }
                     }
-
-                    const data = {
-                        infected: parseInt(totalInfected, 10),
-                        deceased: parseInt(totalDeceased, 10),
-                        SOURCE_URL,
-                        lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
-                        readMe: 'https://apify.com/lukass/covid-est',
-                    };
-
-                    // Compare and save to history
-                    const latest = await kvStore.getValue(LATEST);
-                    if (latest){
-                        delete latest.lastUpdatedAtApify;
-                    }
-                    const actual = Object.assign({}, data);
-                    delete actual.lastUpdatedAtApify;
-                    await Apify.pushData(actual);
-
-                    if(JSON.stringify(latest)!== JSON.stringify(actual)){
-                        log.info('Data did change :( storing new to dataset.');
-                        await Apify.pushData(data);
-                    }
-
-                    await kvStore.setValue(LATEST, data);
-                    log.info('Data stored, finished.')
                     break;
             }
         },
@@ -95,4 +74,36 @@ Apify.main(async () => {
     log.info('CRAWLER -- start');
     await crawler.run();
     log.info('CRAWLER -- finish');
+
+    const data = {
+        infected: parseInt(totalInfected, 10),
+        tested: parseInt(tested, 10),
+        deceased: parseInt(totalDeceased, 10),
+        country: 'Estonia',
+        moreData: 'https://api.apify.com/v2/key-value-stores/AZUhwS51lBBg26wSG/records/LATEST?disableRedirect=true',
+        historyData: 'https://api.apify.com/v2/datasets/Ix8h3SN2Ngyukf7yM/items?format=json&clean=1',
+        SOURCE_URL,
+        lastUpdatedAtApify: new Date(new Date().toUTCString()).toISOString(),
+        readMe: 'https://apify.com/lukass/covid-est',
+    };
+
+    // Compare and save to history
+    const latest = await kvStore.getValue(LATEST);
+    if (latest){
+        delete latest.lastUpdatedAtApify;
+    }
+    if (latest.infected > data.infected || latest.deceased > data.deceased) {
+        throw new Error('Latest data are high then actual - probably wrong scrap');
+    }
+    const actual = Object.assign({}, data);
+    delete actual.lastUpdatedAtApify;
+    await Apify.pushData(actual);
+
+    if(JSON.stringify(latest)!== JSON.stringify(actual)){
+        log.info('Data did change :( storing new to dataset.');
+        await Apify.pushData(data);
+    }
+
+    await kvStore.setValue(LATEST, data);
+    log.info('Data stored, finished.');
 });
