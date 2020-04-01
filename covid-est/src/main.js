@@ -38,15 +38,12 @@ Apify.main(async () => {
                         if (head.text().trim() === 'CURRENT SITUATION IN ESTONIA'){
                             const list = $(box).find('ul > li');
                             const line2Match = list.eq(1).text().match(/(\d+[\s]*\d+)/g);
-                            if (line2Match.length === 2) {
-                                [tested, totalInfected] = line2Match;
-                                tested = tested.replace(' ', '');
+                            if (line2Match) {
+                                [tested, totalInfected, a, b, totalDeceased] = line2Match;
                             }
-                            const line3Match = list.eq(3).text().match(/\.\s(\d+)/g);
-                            if (line3Match.length === 2) {
-                                [a, totalDeceased] = line3Match;
-                                totalDeceased = totalDeceased.replace('.', '');
-                            }
+                            tested = tested.replace(' ', '');
+                            totalInfected = totalInfected.replace(' ', '');
+                            totalDeceased = totalDeceased.replace('.', '');
                         }
                     }
                     // await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Estonia', userData: { label: LABELS.WIKI }});
