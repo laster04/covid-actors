@@ -50,7 +50,7 @@ Apify.main(async () => {
                         infectedByRegion.push({
                             region: key,
                             infectedCount: value,
-                            deceasedCount: NaN
+                            deceasedCount: undefined
                         });
                     }
                     await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Japan#cite_note-mhlw-1', userData: { label: LABELS.WIKI }});
