@@ -1,5 +1,5 @@
 # Coronavirus stats in Netherlands
-Actor gets an actual number of infected and deceased people in Netherlands from https://www.rivm.nl/node/152921
+Actor gets an actual number of infected and deceased people in Netherlands from https://www.rivm.nl/actuele-informatie-over-coronavirus
 
 Latest data are available at this URL: https://api.apify.com/v2/key-value-stores/vqnEUe7VtKNMqGqFF/records/LATEST?disableRedirect=true.
 

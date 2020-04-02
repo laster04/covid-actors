@@ -1,6 +1,6 @@
 {
     "title": "Coronavirus stats in Netherlands",
-    "description": "Actor gets an actual number of infected and deceased people in Netherlands from https://www.rivm.nl/node/152921.\n\nLatest data are available at this URL: https://api.apify.com/v2/key-value-stores/vqnEUe7VtKNMqGqFF/records/LATEST?disableRedirect=true.",
+    "description": "Actor gets an actual number of infected and deceased people in Netherlands from https://www.rivm.nl/actuele-informatie-over-coronavirus.\n\nLatest data are available at this URL: https://api.apify.com/v2/key-value-stores/vqnEUe7VtKNMqGqFF/records/LATEST?disableRedirect=true.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
