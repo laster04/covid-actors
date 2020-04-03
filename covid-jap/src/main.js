@@ -10,17 +10,20 @@ const LABELS = {
 };
 
 Apify.main(async () => {
+    const { notificationEmail } = await Apify.getInput();
     const requestQueue = await Apify.openRequestQueue();
     const kvStore = await Apify.openKeyValueStore('COVID-19-JAPAN');
     const dataset = await Apify.openDataset("COVID-19-JAPAN-HISTORY");
     await requestQueue.addRequest({url: 'https://services8.arcgis.com/JdxivnCyd1rvJTrY/arcgis/rest/services/covid19_list_csv_EnglishView/FeatureServer/0/query?f=json&where=%E7%A2%BA%E5%AE%9A%E6%97%A5%20IS%20NOT%20NULL&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=%E7%A2%BA%E5%AE%9A%E6%97%A5%20asc&resultOffset=0&resultRecordCount=2000&cacheHint=true',
         userData: { label: LABELS.GOV } });
 
-    await Apify.addWebhook({
-        eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
-        requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
-        payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
-    });
+    if (notificationEmail) {
+        await Apify.addWebhook({
+            eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
+            requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+            payloadTemplate: `{"notificationEmail": "${notificationEmail}", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
+        });
+    }
 
     let totalInfected = 0;
     let totalDeceased = 0;

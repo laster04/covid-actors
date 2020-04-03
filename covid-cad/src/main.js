@@ -4,16 +4,19 @@ const LATEST = 'LATEST';
 const {log, requestAsBrowser} = Apify.utils;
 
 Apify.main(async () => {
+    const { notificationEmail } = await Apify.getInput();
     const requestQueue = await Apify.openRequestQueue();
     const kvStore = await Apify.openKeyValueStore('COVID-19-CAD');
     const dataset = await Apify.openDataset("COVID-19-CAD-HISTORY");
     await requestQueue.addRequest({ url: 'https://health-infobase.canada.ca/src/data/covidLive/covid19.csv'});
 
-    await Apify.addWebhook({
-        eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
-        requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
-        payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
-    });
+    if (notificationEmail) {
+        await Apify.addWebhook({
+            eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
+            requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+            payloadTemplate: `{"notificationEmail": "${notificationEmail}", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
+        });
+    }
 
     const crawler = new Apify.BasicCrawler({
         requestQueue,

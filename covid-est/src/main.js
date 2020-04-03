@@ -9,16 +9,19 @@ const LABELS = {
 };
 
 Apify.main(async () => {
+    const { notificationEmail } = await Apify.getInput();
     const requestQueue = await Apify.openRequestQueue();
     const kvStore = await Apify.openKeyValueStore('COVID-19-ESTONIA');
     const dataset = await Apify.openDataset("COVID-19-ESTONIA-HISTORY");
     await requestQueue.addRequest({ url: SOURCE_URL, userData: { label: LABELS.GOV} });
 
-    await Apify.addWebhook({
-        eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
-        requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
-        payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
-    });
+    if (notificationEmail) {
+        await Apify.addWebhook({
+            eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
+            requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+            payloadTemplate: `{"notificationEmail": "${notificationEmail}", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
+        });
+    }
 
     let totalInfected = 0;
     let tested = undefined;

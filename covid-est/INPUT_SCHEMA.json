@@ -4,5 +4,11 @@
     "type": "object",
     "schemaVersion": 1,
     "properties": {
+        "notificationEmail": {
+            "title": "Notification email",
+            "type": "string",
+            "description": "Email where will be send if actor failed",
+            "editor": "textfield"
+        }
     }
 }
