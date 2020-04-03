@@ -10,16 +10,19 @@ const LABELS = {
 };
 
 Apify.main(async () => {
+    const { notificationEmail } = await Apify.getInput();
     const requestQueue = await Apify.openRequestQueue();
     const kvStore = await Apify.openKeyValueStore('COVID-19-NL');
     const dataset = await Apify.openDataset("COVID-19-NL-HISTORY");
     await requestQueue.addRequest({ url: SOURCE_URL, userData: { label: LABELS.GOV }});
 
-    await Apify.addWebhook({
-        eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
-        requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
-        payloadTemplate: `{"notificationEmail": "sirhallukas@gmail.com", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
-    });
+    if (notificationEmail) {
+        await Apify.addWebhook({
+            eventTypes: ['ACTOR.RUN.FAILED', 'ACTOR.RUN.TIMED_OUT'],
+            requestUrl: `https://api.apify.com/v2/acts/mnmkng~email-notification-webhook/runs?token=${Apify.getEnv().token}`,
+            payloadTemplate: `{"notificationEmail": "${notificationEmail}", "eventType": {{eventType}}, "eventData": {{eventData}}, "resource": {{resource}} }`,
+        });
+    }
 
     let totalInfected = 0;
     let totalDeceased = undefined;
@@ -28,18 +31,18 @@ Apify.main(async () => {
         requestQueue,
         useApifyProxy: true,
         maxRequestRetries: 2,
-        apifyProxyGroups: ['GERMANY'],
         handlePageTimeoutSecs: 120,
         handlePageFunction: async ({$, request}) => {
             const { label } = request.userData;
             switch (label) {
                 case LABELS.GOV:
-                    const contentDivs = $('.sdv-landingspagina .card-deck');
-                    if (contentDivs.length > 0) {
-                        const cards = contentDivs.find('.card-body');
-                        const bodyInfected = cards.eq(0).find('p').eq(0).text().trim();
+                    const contentTableRows = $('.table-brand tr');
+                    if (contentTableRows.length > 0) {
+                        const dataRow = contentTableRows.eq(1);
+                        const dataCols = dataRow.find('td');
+                        const bodyInfected = dataCols.eq(0).text().trim();
                         const infectedMatch = bodyInfected.match(/(\d+[\s,\.]\d+)/);
-                        const bodyDeceased = cards.eq(2).find('p').eq(0).text().trim();
+                        const bodyDeceased = dataCols.eq(2).text().trim();
                         const deceasedMatch = bodyDeceased.match(/(\d+[\s,\.]\d+)/);
                         totalInfected = infectedMatch[0].replace('.', '');
                         totalDeceased = deceasedMatch[0].replace('.', '');
