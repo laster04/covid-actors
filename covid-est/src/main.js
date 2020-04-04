@@ -42,7 +42,11 @@ Apify.main(async () => {
                             const list = $(box).find('ul > li');
                             const line2Match = list.eq(1).text().match(/(\d+[\s]*\d+)/g);
                             if (line2Match) {
-                                [tested, totalInfected, a, b, totalDeceased] = line2Match;
+                                [tested, totalInfected] = line2Match;
+                            }
+                            const line4Match = list.eq(4).text().match(/(\d+[\s]*\d+)/g);
+                            if (line4Match) {
+                                [a, b, c, totalDeceased] = line4Match;
                             }
                             tested = tested.replace(' ', '');
                             totalInfected = totalInfected.replace(' ', '');
