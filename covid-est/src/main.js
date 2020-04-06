@@ -35,19 +35,14 @@ Apify.main(async () => {
             const { label } = request.userData;
             switch (label) {
                 case LABELS.GOV:
-                    const infoBoxes = $('.static-infobox02').toArray();
+                    const infoBoxes = $('.first').toArray();
                     for (let box of infoBoxes) {
-                        const head = $(box).find('h1');
-                        if (head.text().trim() === 'CURRENT SITUATION IN ESTONIA'){
-                            const list = $(box).find('ul > li');
-                            const line2Match = list.eq(1).text().match(/(\d+[\s]*\d+)/g);
-                            if (line2Match) {
-                                [tested, totalInfected] = line2Match;
-                            }
-                            const line4Match = list.eq(4).text().match(/(\d+[\s]*\d+)/g);
-                            if (line4Match) {
-                                [a, b, c, totalDeceased] = line4Match;
-                            }
+                        const head = $(box).find('h2');
+                        if (head.text().trim() === 'CURRENT SITUATION IN ESTONIA') {
+                            const lastColumn = $(box).find('.last');
+                            tested = lastColumn.eq(0).text().trim();
+                            totalInfected = lastColumn.eq(1).text().trim();
+                            totalDeceased = lastColumn.eq(2).text().trim();
                             tested = tested.replace(' ', '');
                             totalInfected = totalInfected.replace(' ', '');
                             totalDeceased = totalDeceased.replace('.', '');
