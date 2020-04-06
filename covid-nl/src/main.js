@@ -38,11 +38,13 @@ Apify.main(async () => {
                 case LABELS.GOV:
                     const contentTableRows = $('.table-brand tr');
                     if (contentTableRows.length > 0) {
-                        const dataRow = contentTableRows.eq(1);
-                        const dataCols = dataRow.find('td');
-                        const bodyInfected = dataCols.eq(0).text().trim();
+                        let dataRow = contentTableRows.eq(0);
+                        let dataCols = dataRow.find('td');
+                        const bodyInfected = dataCols.eq(1).text().trim();
                         const infectedMatch = bodyInfected.match(/(\d+[\s,\.]\d+)/);
-                        const bodyDeceased = dataCols.eq(2).text().trim();
+                        dataRow = contentTableRows.eq(2);
+                        dataCols = dataRow.find('td');
+                        const bodyDeceased = dataCols.eq(1).text().trim();
                         const deceasedMatch = bodyDeceased.match(/(\d+[\s,\.]\d+)/);
                         totalInfected = infectedMatch[0].replace('.', '');
                         totalDeceased = deceasedMatch[0].replace('.', '');
