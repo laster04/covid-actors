@@ -36,7 +36,7 @@ Apify.main(async () => {
             const { label } = request.userData;
             switch (label) {
                 case LABELS.GOV:
-                    const contentTableRows = $('.table-brand tr');
+                    const contentTableRows = $('.table-responsive tr');
                     if (contentTableRows.length > 0) {
                         let dataRow = contentTableRows.eq(0);
                         let dataCols = dataRow.find('td');
