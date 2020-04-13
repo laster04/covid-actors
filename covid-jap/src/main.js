@@ -73,6 +73,10 @@ Apify.main(async () => {
                             if (th.text().trim() === 'Deaths') {
                                 totalDeceased = value.text().trim();
                             }
+                            if (th.text().trim() === 'Confirmed cases') {
+                                let trimValue = value.text().trim().replace(',', '');
+                                totalInfected = parseInt(trimValue);
+                            }
                         }
                     }
                     break;
