@@ -75,7 +75,9 @@ Apify.main(async () => {
                             }
                             if (th.text().trim() === 'Confirmed cases') {
                                 let trimValue = value.text().trim().replace(',', '');
-                                totalInfected = parseInt(trimValue);
+                                if (totalInfected < parseInt(trimValue)){
+                                    totalInfected = parseInt(trimValue);
+                                }
                             }
                         }
                     }
