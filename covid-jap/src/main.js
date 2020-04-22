@@ -15,10 +15,21 @@ Apify.main(async () => {
     const requestQueue = await Apify.openRequestQueue();
     const kvStore = await Apify.openKeyValueStore('COVID-19-JAPAN');
     const dataset = await Apify.openDataset("COVID-19-JAPAN-HISTORY");
+    const requestList = await Apify.openRequestList('LIST', [
+        {
+            url: 'https://services8.arcgis.com/JdxivnCyd1rvJTrY/arcgis/rest/services/covid19_list_csv_EnglishView/FeatureServer/0/query?f=json&where=%E7%A2%BA%E5%AE%9A%E6%97%A5%20IS%20NOT%20NULL&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=%E7%A2%BA%E5%AE%9A%E6%97%A5%20asc&resultOffset=0&resultRecordCount=2000&cacheHint=true',
+            userData: { label: LABELS.MAP }
+        },
+        {
+            url: 'https://www3.nhk.or.jp/news/special/coronavirus/data/allpatients-data.json',
+            userData: { label: LABELS.GOV }
+        },
+        { url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Japan', userData: { label: LABELS.WIKI }}
+    ])
     // await requestQueue.addRequest({url: 'https://services8.arcgis.com/JdxivnCyd1rvJTrY/arcgis/rest/services/covid19_list_csv_EnglishView/FeatureServer/0/query?f=json&where=%E7%A2%BA%E5%AE%9A%E6%97%A5%20IS%20NOT%20NULL&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=%E7%A2%BA%E5%AE%9A%E6%97%A5%20asc&resultOffset=0&resultRecordCount=2000&cacheHint=true',
     //     userData: { label: LABELS.MAP } });
-    await requestQueue.addRequest({url: 'https://www3.nhk.or.jp/news/special/coronavirus/data/allpatients-data.json',
-        userData: { label: LABELS.GOV } });
+    // await requestQueue.addRequest({url: 'https://www3.nhk.or.jp/news/special/coronavirus/data/allpatients-data.json',
+    //     userData: { label: LABELS.GOV } });
 
     if (notificationEmail) {
         await Apify.addWebhook({
@@ -33,9 +44,8 @@ Apify.main(async () => {
     let infectedByRegion = [];
 
     const crawler = new Apify.BasicCrawler({
-        requestQueue,
+        requestList,
         handleRequestFunction: async ({request}) => {
-            console.log('CRAWLER -- start with page');
             const { label } = request.userData;
             let response;
             let body;
@@ -54,14 +64,14 @@ Apify.main(async () => {
                     }
                     for (let [key, value] of prefectureMap) {
                         console.log(key + ' = ' + value);
-                        totalInfected += value;
+                        // totalInfected += value;
                         infectedByRegion.push({
                             region: key,
                             infectedCount: value,
                             deceasedCount: undefined
                         });
                     }
-                    await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Japan', userData: { label: LABELS.WIKI }});
+                    // await requestQueue.addRequest({ url: 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Japan', userData: { label: LABELS.WIKI }});
                     break;
                 case LABELS.GOV:
                     response = await requestAsBrowser({
@@ -123,14 +133,14 @@ Apify.main(async () => {
     if (latest) {
         delete latest.lastUpdatedAtApify;
     }
-    // if (latest.infected > data.infected || latest.deceased > data.deceased) {
-    //     log.error('Latest data are high then actual - probably wrong scrap');
-    //     log.info('ACTUAL DATA');
-    //     console.log(data);
-    //     log.info('LATEST DATA');
-    //     console.log(latest);
-    //     process.exit(1);
-    // }
+    if (latest.infected > data.infected || latest.deceased > data.deceased) {
+        log.error('Latest data are high then actual - probably wrong scrap');
+        log.info('ACTUAL DATA');
+        console.log(data);
+        log.info('LATEST DATA');
+        console.log(latest);
+        process.exit(1);
+    }
     const actual = Object.assign({}, data);
     delete actual.lastUpdatedAtApify;
     await Apify.pushData(data);
